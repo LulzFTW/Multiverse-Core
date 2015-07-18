@@ -22,12 +22,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerPortalEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.player.*;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -338,39 +333,31 @@ public class MVPlayerListener implements Listener {
      * @param world The world the player is in.
      */
     public void handleGameModeAndFlight(final Player player, final MultiverseWorld world) {
-        // We perform this task one tick later to MAKE SURE that the player actually reaches the
-        // destination world, otherwise we'd be changing the player mode if they havent moved anywhere.
-        this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin,
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!MVPlayerListener.this.pt.playerCanIgnoreGameModeRestriction(world, player)) {
-                            // Check that the player is in the new world and they haven't been teleported elsewhere or the event cancelled.
-                            if (player.getWorld() == world.getCBWorld()) {
-                                Logging.fine("Handling gamemode for player: %s, Changing to %s", player.getName(), world.getGameMode().toString());
-                                Logging.finest("From World: %s", player.getWorld());
-                                Logging.finest("To World: %s", world);
-                                player.setGameMode(world.getGameMode());
-                                // Check if their flight mode should change
-                                // TODO need a override permission for this
-                                if (player.getAllowFlight() && !world.getAllowFlight() && player.getGameMode() != GameMode.CREATIVE) {
-                                    player.setAllowFlight(false);
-                                    if (player.isFlying()) {
-                                        player.setFlying(false);
-                                    }
-                                } else if (world.getAllowFlight()) {
-                                    if (player.getGameMode() == GameMode.CREATIVE) {
-                                        player.setAllowFlight(true);
-                                    }
-                                }
-                            } else {
-                                Logging.fine("The gamemode/allowfly was NOT changed for player '%s' because he is now in world '%s' instead of world '%s'",
-                                        player.getName(), player.getWorld().getName(), world.getName());
-                            }
-                        } else {
-                            MVPlayerListener.this.plugin.log(Level.FINE, "Player: " + player.getName() + " is IMMUNE to gamemode changes!");
-                        }
+        if (!MVPlayerListener.this.pt.playerCanIgnoreGameModeRestriction(world, player)) {
+            // Check that the player is in the new world and they haven't been teleported elsewhere or the event cancelled.
+            if (player.getWorld() == world.getCBWorld()) {
+                Logging.fine("Handling gamemode for player: %s, Changing to %s", player.getName(), world.getGameMode().toString());
+                Logging.finest("From World: %s", player.getWorld());
+                Logging.finest("To World: %s", world);
+                player.setGameMode(world.getGameMode());
+                // Check if their flight mode should change
+                // TODO need a override permission for this
+                if (player.getAllowFlight() && !world.getAllowFlight() && player.getGameMode() != GameMode.CREATIVE) {
+                    player.setAllowFlight(false);
+                    if (player.isFlying()) {
+                        player.setFlying(false);
                     }
-                }, 1L);
+                } else if (world.getAllowFlight()) {
+                    if (player.getGameMode() == GameMode.CREATIVE) {
+                        player.setAllowFlight(true);
+                    }
+                }
+            } else {
+                Logging.fine("The gamemode/allowfly was NOT changed for player '%s' because he is now in world '%s' instead of world '%s'",
+                        player.getName(), player.getWorld().getName(), world.getName());
+            }
+        } else {
+            MVPlayerListener.this.plugin.log(Level.FINE, "Player: " + player.getName() + " is IMMUNE to gamemode changes!");
+        }
     }
 }
